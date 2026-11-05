@@ -80,7 +80,10 @@ jobs:
           echo "exit=${PIPESTATUS[0]}"
           R=run-test/potionrefill-test-result.txt
           if [ -f "$R" ]; then
-            echo "::notice title=In-game test::$(sed ':a;N;$!ba;s/\n/%0A/g' "$R")"
+            P=$(grep -c '^PASS ' "$R"); F=$(grep -c '^FAIL ' "$R")
+            echo "::notice title=In-game test summary::pass=$P fail=$F"
+            echo "::notice title=In-game test failures::$(grep '^FAIL ' "$R" | cut -c1-200 | head -30 | sed ':a;N;$!ba;s/\n/%0A/g')"
+            echo "::notice title=In-game test final lines::$(tail -14 "$R" | cut -c1-200 | sed ':a;N;$!ba;s/\n/%0A/g')"
             grep -q '^RESULT PASS$' "$R"; exit $?
           fi
           TAIL=$(grep -E 'ERROR|Exception|error:|FAILED|PotionRefillTest|Caused by' gradle-run.log | tail -25 | cut -c1-220 | sed ':a;N;$!ba;s/\n/%0A/g')

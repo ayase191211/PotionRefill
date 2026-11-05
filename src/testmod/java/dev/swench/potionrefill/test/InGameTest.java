@@ -211,8 +211,13 @@ public class InGameTest implements ClientModInitializer {
                 check("X11 press reaches GLFW", GLFW.glfwGetMouseButton(client.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_MIDDLE) == GLFW.GLFW_PRESS);
                 releaseMouse();
                 check("inventory closed + key: nothing moves", hotbarEmpty(client.player.getInventory()));
+                step = 30;
+                waited = SETTLE;
+            }
+            case 30 -> {
                 client.setScreen(new InventoryScreen(client.player));
-                next(SETTLE);
+                step = 4;
+                waited = SETTLE;
             }
             case 4 -> {
                 check("inventory open, no key: nothing moves", hotbarEmpty(client.player.getInventory()));
