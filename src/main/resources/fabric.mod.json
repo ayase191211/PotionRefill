@@ -22,8 +22,8 @@
     "potionrefill.mixins.json"
   ],
   "depends": {
-    "fabricloader": "*",
-    "fabric": "*",
-    "minecraft": "*"
+    "fabricloader": ">=0.14.0",
+    "minecraft": "1.18.x",
+    "java": ">=17"
   }
 }
