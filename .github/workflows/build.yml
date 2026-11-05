@@ -2,7 +2,7 @@ name: Build 1.18.2
 
 on:
   push:
-    branches: ["1.18.2-fabric"]
+    branches: ["1.18.2-fabric", "1.18.2-fork"]
   workflow_dispatch:
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
         run: ./gradlew build --no-daemon --stacktrace
       - name: Verify jar
         run: |
-          JAR=build/libs/potionrefill-1.0-1.18.2.jar
+          JAR=$(ls build/libs/*.jar | grep -v sources)
           rm -rf jarcheck && mkdir jarcheck && unzip -q "$JAR" -d jarcheck
           python3 - <<'PY'
           import json, struct, glob, os
@@ -35,6 +35,9 @@ jobs:
               "refmap declared and present": bool(ref),
               "refmap targets intermediary tick": "method_1574" in ref,
               "minecraft dependency": mod["depends"]["minecraft"] == "1.18.x",
+              "cloth config required": "cloth-config2" in mod["depends"],
+              "modmenu entrypoint": "modmenu" in mod["entrypoints"],
+              "lang file included": os.path.exists(r + "assets/potionrefill/lang/en_us.json"),
               "all classes Java 17 (61)": bool(major) and set(major.values()) == {61},
               "no test classes in jar": not any("test" in k.lower() for k in major),
               "icon included": os.path.exists(r + mod["icon"]),

@@ -1,0 +1,12 @@
+{
+  "key.categories.potionrefill": "Potion Refill",
+  "key.potionrefill.refill": "Refill",
+  "key.potionrefill.config": "Open Config",
+  "text.autoconfig.potionrefill.title": "Potion Refill",
+  "text.autoconfig.potionrefill.option.autoGrappleRefill": "auto grapple refill",
+  "text.autoconfig.potionrefill.option.autoGrappleRefillSlot": "auto grapple refill hotbar slot",
+  "text.autoconfig.potionrefill.option.autoGappleRefill": "auto gapple refill",
+  "text.autoconfig.potionrefill.option.autoGappleRefillSlot": "auto gapple refill hotbar slot",
+  "text.autoconfig.potionrefill.option.autoSugarRefill": "auto sugar refill",
+  "text.autoconfig.potionrefill.option.autoSugarRefillSlot": "auto sugar refill hotbar slot"
+}
