@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "potionrefilltest",
+  "version": "1.0",
+  "name": "PotionRefill In-Game Test",
+  "environment": "client",
+  "entrypoints": { "client": ["dev.swench.potionrefill.test.InGameTest"] },
+  "depends": { "fabric-lifecycle-events-v1": "*", "potionrefill": "*" }
+}

@@ -19,6 +19,30 @@ dependencies {
 }
 
 
+// Dev-only in-game test. Not part of the mod jar.
+sourceSets {
+    testmod {
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+}
+
+loom {
+    mods {
+        potionrefill { sourceSet sourceSets.main }
+        potionrefilltest { sourceSet sourceSets.testmod }
+    }
+    runs {
+        testClient {
+            client()
+            source sourceSets.testmod
+            runDir "run-test"
+            ideConfigGenerated false
+            vmArg "-Xmx2G"
+        }
+    }
+}
+
 def targetJavaVersion = 17
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = "UTF-8"

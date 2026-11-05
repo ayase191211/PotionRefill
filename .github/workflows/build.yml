@@ -7,21 +7,81 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
       - name: Build
         run: ./gradlew build --no-daemon --stacktrace
-      - name: Show jar contents
+      - name: Verify jar
         run: |
-          ls -l build/libs
-          unzip -l build/libs/potionrefill-1.0-1.18.2.jar
-      - uses: actions/upload-artifact@v4
+          JAR=build/libs/potionrefill-1.0-1.18.2.jar
+          rm -rf jarcheck && mkdir jarcheck && unzip -q "$JAR" -d jarcheck
+          python3 - <<'PY'
+          import json, struct, glob, os
+          r = "jarcheck/"
+          mx = json.load(open(r + "potionrefill.mixins.json"))
+          mod = json.load(open(r + "fabric.mod.json"))
+          refmap = mx.get("refmap")
+          ref = open(r + refmap).read() if refmap and os.path.exists(r + refmap) else ""
+          major = {}
+          for f in glob.glob(r + "**/*.class", recursive=True):
+              major[os.path.basename(f)] = struct.unpack(">H", open(f, "rb").read()[6:8])[0]
+          checks = {
+              "refmap declared and present": bool(ref),
+              "refmap targets intermediary tick": "method_1574" in ref,
+              "minecraft dependency": mod["depends"]["minecraft"] == "1.18.x",
+              "all classes Java 17 (61)": bool(major) and set(major.values()) == {61},
+              "no test classes in jar": not any("test" in k.lower() for k in major),
+              "icon included": os.path.exists(r + mod["icon"]),
+          }
+          msg = "%0A".join(("PASS " if v else "FAIL ") + k for k, v in checks.items())
+          print(f"::notice title=Jar verification::{msg}%0Aclasses={major}")
+          raise SystemExit(0 if all(checks.values()) else 1)
+          PY
+      - uses: actions/upload-artifact@v5
         with:
           name: potionrefill-1.18.2
           path: build/libs/*.jar
+
+  ingame-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install display stack
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb xdotool libgl1 libgl1-mesa-dri libglx-mesa0 libxrandr2 libxcursor1 libxi6 libxxf86vm1 x11-xserver-utils
+      - name: Run client test
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: |
+          set +e
+          timeout 1200 xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew runTestClient --no-daemon --stacktrace 2>&1 | tee gradle-run.log
+          echo "exit=${PIPESTATUS[0]}"
+          R=run-test/potionrefill-test-result.txt
+          if [ -f "$R" ]; then
+            echo "::notice title=In-game test::$(sed ':a;N;$!ba;s/\n/%0A/g' "$R")"
+            grep -q '^RESULT PASS$' "$R"; exit $?
+          fi
+          TAIL=$(grep -E 'ERROR|Exception|error:|FAILED|PotionRefillTest|Caused by' gradle-run.log | tail -25 | cut -c1-220 | sed ':a;N;$!ba;s/\n/%0A/g')
+          echo "::error title=No test result::$TAIL"
+          exit 1
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: ingame-test-logs
+          path: |
+            gradle-run.log
+            run-test/logs/
+            run-test/crash-reports/
+            run-test/potionrefill-test-result.txt
